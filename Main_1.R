@@ -584,6 +584,37 @@ file <- paste (wd, "objects", "agrc.12.csv", sep = "/")
 write.table (agrc, file = file, sep = ",")
 agrc
 }     #Accountability Graduation Rate Cohort 2013 from KDE
+################################################################################## Start Here!
+Clean.AGRC14 <- function (){
+  wd <- getwd()
+  file <- paste (wd, "data sets", "ACCOUNTABILITY_GRADUATION_RATE_COHORT_2013_14.csv", sep = "/")
+  agrc14 <- read.csv (file, header = T, sep = ",", as.is = T,
+                    strip.white = T)
+  file <- paste (wd, "objects", "SAAR.1999.2013.csv", sep = "/")
+  saar <- read.csv (file, header = T, sep = ",", as.is = T, strip.white = T)
+  index <- data.frame (saar$DISTRICT)
+  
+  
+  agrc14 <- na.omit(agrc14)
+
+  
+  agrc14 <- agrc14 [agrc14$SCH_NAME == "---District Total---", ]
+  agrc14 <- agrc14 [agrc14$DISAGG_ORDER == "0", ]
+  agrc14 <- agrc14 [agrc14$SCH_YEAR != NA, ]
+  agrc14 <- agrc14 [, c(1, 4, 8)]
+  names(agrc14)[3] <- paste ("Grad.w.Diploma.in.4.years", 2012, "KDE", sep = ".")
+  names (agrc14)[2] <- "DISTRICT"
+  agrc14$DISTRICT[142] <- "Raceland Independent"
+  agrc14$DISTRICT[160] <- "Walton Verona Independent"
+  
+  setdiff (saar$DISTRICT, agrc$DISTRICT)  #7 schools missing
+  #Save as R object to load in later script
+  file <- paste (wd, "objects", "agrc.12.csv", sep = "/")
+  write.table (agrc, file = file, sep = ",")
+  agrc14
+  
+}
+
 Clean.KYGR    <- function (){
   #build table for Kentucky state-wide reported graduation rates
   #no computation--pulled Ky's number from KDE data

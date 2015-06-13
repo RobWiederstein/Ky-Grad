@@ -13,10 +13,11 @@ get_grads_2003_2007 <- function(){
     gr <- gr [gr$SCHNAME == "---DISTRICT TOTAL---", ]
     gr <- gr [, -2]
     
-    #rename vars
-    names(gr)[2:6] <- paste ("Grad.w.Diploma.in.4.years", 2002:2006, "KDE", sep = ".")
+    #wide to long
     names(gr)[1]   <- "DISTRICT"
-    gr[grep ("Walton", gr$DISTRICT),1] <- "Walton Verona Independent"
+    library(reshape)
+    gr <- melt(gr, id.vars = "DISTRICT", variable_name = "variable")
+    gr[grep ("Walton-Verona Independent", gr$DISTRICT)] <- "Walton Verona Independent"
     gr
 }
 xyz <- get_grads_2003_2007()

@@ -73,5 +73,36 @@ get_grads_2007_2011 <- function(){
     save(df, file = file)
     df
 }
-
 zzz <- get_grads_2007_2011()
+
+get_grads_2013 <- function(){
+    #http://applications.education.ky.gov/SRC/DataSets.aspx
+    #2012-2013 Diploma Recipients w/i 4 years
+    #import
+    wd <- getwd()
+    file <- paste (wd, "data_raw", "ACCOUNTABILITY_GRADUATION_RATE_COHORT.csv", sep = "/")
+    agrc <- read.csv (file, header = T, sep = ",", as.is = T,
+                      strip.white = T)
+    
+    #subset
+    agrc <- subset(agrc, subset = c(DISAGG_ORDER == "0" &
+                                 SCH_NAME == "--District Total--"
+                                 ),
+                       select = c(SCH_YEAR, DIST_NAME, COHORT_NUMERATOR)
+                   )
+    
+    #rename vars
+    names (agrc)[2] <- "DISTRICT"
+    
+    #match names to SAAR index
+    agrc$DISTRICT[grep("Raceland-Worthington Independent", agrc$DISTRICT)] <- "Raceland Independent"
+    agrc$DISTRICT[grep("Walton-Verona Independent", agrc$DISTRICT)] <- "Walton Verona Independent"
+    agrc$SCH_YEAR <- substr(agrc$SCH_YEAR, start = 5, stop = 8)
+
+    #setdiff (saar$DISTRICT, agrc$DISTRICT)  7 schools missing
+    #Save as R object to load in later script
+    file <- paste (wd, "objects", "agrc", sep = "/")
+    save(agrc, file = file)
+    agrc
+}
+rst <- get_grads_2013()

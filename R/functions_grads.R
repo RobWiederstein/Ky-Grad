@@ -17,12 +17,11 @@ get_grads_2003_2007 <- function(){
     names(gr)[1]   <- "DISTRICT"
     library(reshape)
     gr <- melt(gr, id.vars = "DISTRICT", variable_name = "variable")
-    gr[grep ("Walton-Verona Independent", gr$DISTRICT)] <- "Walton Verona Independent"
+    num <- grep ("Walton-Verona Independent", gr$DISTRICT)
+    gr$DISTRICT[num] <- "Walton Verona Independent"
     gr
 }
-xyz <- get_grads_2003_2007()
-
-
+gr_03_07 <- get_grads_2003_2007()
 
 get_grads_2007_2011 <- function(){
 #AFGR data is for 2008-2012.
@@ -73,7 +72,7 @@ get_grads_2007_2011 <- function(){
     save(df, file = file)
     df
 }
-zzz <- get_grads_2007_2011()
+gr_07_11 <- get_grads_2007_2011()
 
 get_grads_2013 <- function(){
     #http://applications.education.ky.gov/SRC/DataSets.aspx
@@ -105,4 +104,48 @@ get_grads_2013 <- function(){
     save(agrc, file = file)
     agrc
 }
-rst <- get_grads_2013()
+gr_13 <- get_grads_2013()
+
+get_grads_2014 <- function(){
+    #import grad data from excel data sheet
+    wd <- getwd()
+    file <- paste (wd, "data_raw", "ACCOUNTABILITY_CCR_HIGHSCHOOL.xlsx", sep = "/")
+    library(xlsx)
+    agrc14 <- read.xlsx2(file = file, sheetIndex = 1, colClasses = "character",
+                         stringsAsFactors = F)
+    
+    #import saar data
+    file <- paste (wd, "objects", "SAAR.1999.2013.csv", sep = "/")
+    saar <- read.csv (file, header = T, sep = ",", as.is = T, strip.white = T)
+    index <- data.frame (saar$DISTRICT)
+    
+    #subset
+    agrc14 <- subset(agrc14, subset = c(SCH_YEAR == "20132014" &
+                                   DISAGG_ORDER == "0" &
+                                   SCH_NAME == "---District Total---"),
+                        select = c(SCH_YEAR, DIST_NAME,
+                                   NBR_GRADUATES_WITH_DIPLOMA))
+    
+    #name vars
+    names (agrc14)[1:2] <- c("Year", "DISTRICT")
+    
+    #fix year
+    agrc14$Year <- substr(agrc14$Year, start = 5, stop = 8)
+    
+    
+    
+    #fix dist names to match saar
+    num <- grep("Raceland-Worthington Independent", agrc14$DISTRICT)
+    agrc14$DISTRICT[num] <- "Raceland Independent"
+    num <- grep("Walton-Verona Independent", agrc14$DISTRICT)
+    agrc14$DISTRICT[num] <- "Walton Verona Independent"
+    
+    # #7 schools missing: "Anchorage Independent"      "East Bernstadt Independent" "Harrodsburg Independent"   
+    #"Monticello Independent"     "Providence Independent"     "Science Hill Independent"  
+    #"Southgate Independent"      "West Point Independent"  
+    #Save as R object to load in later script
+    file <- paste (wd, "objects", "agrc.14", sep = "/")
+    save(agrc14, file = file)
+    agrc14
+}
+gr_14 <- get_grads_2014

@@ -1,3 +1,4 @@
+#get graduate data for years 2003 - 2007 ----
 get_grads_2003_2007 <- function(){
     #Grad Rate 2003-2007 was sent via email from Kentucky Department of Education
     #No longer available on website. Disaggregated by school district
@@ -6,7 +7,8 @@ get_grads_2003_2007 <- function(){
     file <- paste (wd, "data_raw", "Grad Rate 2003-2007.csv", sep = "/")
     gr <- read.csv (file = file, sep = ",", header = TRUE,
                     strip.white = TRUE,
-                    colClasses = "character")
+                    colClasses = "character",
+                    stringsAsFactors = F)
     
     #subset cols to grads only
     gr <- gr [, c(4, 5, grep ("GRADS_4YR", names (gr)))]
@@ -16,14 +18,20 @@ get_grads_2003_2007 <- function(){
     #wide to long
     names(gr)[1]   <- "DISTRICT"
     library(reshape)
-    gr <- melt(gr, id.vars = "DISTRICT", variable_name = "variable")
+    gr <- melt.data.frame(gr, id.vars = "DISTRICT", variable_name = "variable")
     num <- grep ("Walton-Verona Independent", gr$DISTRICT)
     gr$DISTRICT[num] <- "Walton Verona Independent"
+    
+    #create Year column
+    library(stringr)
+    a <- str_split(gr$variable, pattern = "_")
+    gr$Year <- paste("20", sapply(a, "[", 3), sep = "")
+    gr <- gr[, c("Year", "DISTRICT", "variable", "value")]
     gr
 }
-gr_03_07 <- get_grads_2003_2007()
 
-get_grads_2007_2011 <- function(){
+#get graduate data for years 2008 - 2012----
+get_grads_2008_2012 <- function(){
 #AFGR data is for 2008-2012.
 #David Curd with KDE advised that AFGR data is lagged one year.
 #2012 data would be for 2010-11 School Year
@@ -53,27 +61,13 @@ get_grads_2007_2011 <- function(){
     df$DISTRICT[grep("Mccreary County", df$DISTRICT)] <- "McCreary County"
     df$DISTRICT[grep("Raceland-Worthington Independe", df$DISTRICT)] <- "Raceland Independent"
     df$DISTRICT[grep("Walton-Verona Independent", df$DISTRICT)] <- "Walton Verona Independent"
-    
-    #Diploma Recipients from KDE (DR.**) by year.  Because 1 yr lag, 2012 is for 2010-2011 school year.
-    #Code uses first year of school year, contrary to KDE naming conventions
-    df$Year[which(df$Year == 2012)] <- "2011a"
-    df$Year[which(df$Year == "2011")] <- "2010a"
-    df$Year[which(df$Year == "2010")] <- "2009a"
-    df$Year[which(df$Year == "2009")] <- "2008a"
-    df$Year[which(df$Year == "2008")] <- "2007a"
-    df$Year <- gsub("a", "", df$Year)
-    df$Year <- as.integer(df$Year)
-    
-    #Save as R object to load in later script
-    wd <- getwd()
-    path <- "objects"
-    file <- "afgr.07.11"    
-    file  <- paste (wd, path, file, sep = "/")
-    save(df, file = file)
+
+    #reshape
+    df <- melt.data.frame(df, id.vars = c("Year", "DISTRICT"))
     df
 }
-gr_07_11 <- get_grads_2007_2011()
 
+#get graduate data for year 2013----
 get_grads_2013 <- function(){
     #http://applications.education.ky.gov/SRC/DataSets.aspx
     #2012-2013 Diploma Recipients w/i 4 years
@@ -92,20 +86,22 @@ get_grads_2013 <- function(){
     
     #rename vars
     names (agrc)[2] <- "DISTRICT"
+    names(agrc)[1] <- "Year"
     
     #match names to SAAR index
     agrc$DISTRICT[grep("Raceland-Worthington Independent", agrc$DISTRICT)] <- "Raceland Independent"
     agrc$DISTRICT[grep("Walton-Verona Independent", agrc$DISTRICT)] <- "Walton Verona Independent"
-    agrc$SCH_YEAR <- substr(agrc$SCH_YEAR, start = 5, stop = 8)
+    agrc$Year <- substr(agrc$Year, start = 5, stop = 8)
+    
+    #long to wide
+    agrc <- melt.data.frame(agrc, id.vars = c("Year", "DISTRICT"))
 
     #setdiff (saar$DISTRICT, agrc$DISTRICT)  7 schools missing
     #Save as R object to load in later script
-    file <- paste (wd, "objects", "agrc", sep = "/")
-    save(agrc, file = file)
     agrc
 }
-gr_13 <- get_grads_2013()
 
+#get graduate data for year 2014----
 get_grads_2014 <- function(){
     #import grad data from excel data sheet
     wd <- getwd()
@@ -144,8 +140,37 @@ get_grads_2014 <- function(){
     #"Monticello Independent"     "Providence Independent"     "Science Hill Independent"  
     #"Southgate Independent"      "West Point Independent"  
     #Save as R object to load in later script
-    file <- paste (wd, "objects", "agrc.14", sep = "/")
-    save(agrc14, file = file)
+    
+    #wide to long
+    agrc14 <- melt.data.frame(agrc14, id.vars = c("Year", "DISTRICT"))
     agrc14
 }
-gr_14 <- get_grads_2014
+
+#combine different sets----
+merge_grads_all <- function(){
+    gr_03_07    <- get_grads_2003_2007()
+    gr_08_12    <- get_grads_2008_2012()
+    gr_13       <- get_grads_2013()
+    gr_14       <- get_grads_2014()
+    df          <- rbind(gr_03_07,
+                         gr_08_12,
+                         gr_13,
+                         gr_14
+    )
+    #have commas!!!
+    df$value <- gsub(",", "", df$value)
+    df$value <- as.numeric(as.character(df$value))
+    df[821, 4] <- 0  #Providence?
+    df
+}
+
+#write it out into R object ----
+write_GRADS_ALL <- function(){
+    df <- merge_grads_all()
+    #write out r object to "objects" directory
+    wd <- getwd()
+    dir <- "objects"
+    file <- "grads_2003_2014"
+    myfile <- paste(wd, dir, file, sep = "/")
+    save(df, file = myfile)
+}

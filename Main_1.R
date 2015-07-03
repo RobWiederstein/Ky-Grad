@@ -587,7 +587,7 @@ agrc
 ################################################################################## Start Here!
 Clean.AGRC14 <- function (){
   wd <- getwd()
-  file <- paste (wd, "data sets", "ACCOUNTABILITY_GRADUATION_RATE_COHORT_2013_14.csv", sep = "/")
+  file <- paste (wd, "data_raw", "ACCOUNTABILITY_GRADUATION_RATE_COHORT_2013_14.csv", sep = "/")
   agrc14 <- read.csv (file, header = T, sep = ",", as.is = T,
                     strip.white = T)
   file <- paste (wd, "objects", "SAAR.1999.2013.csv", sep = "/")

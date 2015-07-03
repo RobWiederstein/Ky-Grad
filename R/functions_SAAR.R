@@ -1,5 +1,3 @@
-
-
 # import saar datasets by year----
 import_SAAR1999 <- function(){
     a <- read.csv(paste(getwd(), "/data_raw/SAAR1999.csv", sep = ""), 
